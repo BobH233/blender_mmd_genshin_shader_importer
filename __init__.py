@@ -41,7 +41,7 @@ class BOBH_PT_main_panel(bpy.types.Panel):
         current_box = box1
         row = current_box.row()
 
-        row.label(text="导入原神Shader")
+        row.label(text="导入原神Shader", icon='MATERIAL')
 
         row = current_box.row()
         row.operator("bobh.import_shader", text="导入原神Shader预设")
@@ -51,8 +51,11 @@ class BOBH_PT_main_panel(bpy.types.Panel):
         row = current_box.row()
         row.label(text=f"当前材质目录: {scene.material_directory}")
 
+        row = current_box.row()
+        row.operator("bobh.apply_shader_to_mmd_model", text="应用材质到选定mmd模型")
 
-class BOBH_OT_import_shader_operator(bpy.types.Operator):
+
+class BOBH_OT_import_shader(bpy.types.Operator):
     bl_label = "选择shader的.blend文件"
     bl_idname = "bobh.import_shader"
     filepath: bpy.props.StringProperty(subtype="FILE_PATH") # type: ignore
@@ -145,12 +148,90 @@ class BOBH_OT_set_character_material_directory(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
-    
+
+class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
+    bl_label = "将Shader材质应用到角色"
+    bl_idname = "bobh.apply_shader_to_mmd_model"
+
+    def find_mmd_root_object(self, obj: bpy.types.Object):
+        while obj is not None and obj.mmd_type != "ROOT":
+            obj = obj.parent
+        return obj
+
+    def guard_shader_exist(self):
+        imported_mat_name = [
+            'GI_Body',
+            'GI_Face',
+            'GI_Hair',
+            'GI_Outlines'
+        ]
+        for checking_name in imported_mat_name:
+            if checking_name not in bpy.data.materials:
+                return False
+        return True
+        
+
+
+    def copy_meterial_for_character(self, model_name):
+        meterial_name_map = {
+            "Body_Mat_Name": f"GI_{model_name}_Body",
+            "Hair_Mat_Name": f"GI_{model_name}_Hair",
+            "Face_Mat_Name": f"GI_{model_name}_Face",
+            "Face_Outline_Mat_Name": f"GI_{model_name}_Face_Outline",
+            "Hair_Outline_Mat_Name": f"GI_{model_name}_Hair_Outline",
+            "Body_Outline_Mat_Name": f"GI_{model_name}_Body_Outline",
+        }
+        if self.guard_shader_exist() == False:
+            raise Exception("请先导入shader预设")
+        
+        # Body mat
+        ref_material = bpy.data.materials['GI_Body']
+        char_material = ref_material.copy()         
+        char_material.name = meterial_name_map["Body_Mat_Name"]
+
+        # Hair mat
+        ref_material = bpy.data.materials['GI_Hair']
+        char_material = ref_material.copy()         
+        char_material.name = meterial_name_map["Hair_Mat_Name"]
+
+        # Face mat
+        ref_material = bpy.data.materials['GI_Face']
+        char_material = ref_material.copy()         
+        char_material.name = meterial_name_map["Face_Mat_Name"]
+
+        # Outline mat
+        ref_material = bpy.data.materials['GI_Outlines']
+        char_material = ref_material.copy()         
+        char_material.name = meterial_name_map["Face_Outline_Mat_Name"]
+        char_material = ref_material.copy()         
+        char_material.name = meterial_name_map["Hair_Outline_Mat_Name"]
+        char_material = ref_material.copy()         
+        char_material.name = meterial_name_map["Body_Outline_Mat_Name"]
+
+
+    def execute(self, context):
+        select_obj = context.active_object
+        mmd_root_obj = self.find_mmd_root_object(select_obj)
+        if not mmd_root_obj:
+            self.report({'ERROR'}, f"请选中一个MMD模型角色")
+            return {'CANCELLED'}
+        
+        model_name = f"{mmd_root_obj.mmd_root.name}_{mmd_root_obj.mmd_root.name_e}_"
+
+        try:
+            self.copy_meterial_for_character(model_name)
+        except Exception as e:
+            self.report({'ERROR'}, f"{str(e)}")
+            return {'CANCELLED'}
+
+        self.report({'INFO'}, "应用材质到角色成功")
+        return {'FINISHED'}
 
 def register():
     bpy.utils.register_class(BOBH_PT_main_panel)
-    bpy.utils.register_class(BOBH_OT_import_shader_operator)
+    bpy.utils.register_class(BOBH_OT_import_shader)
     bpy.utils.register_class(BOBH_OT_set_character_material_directory)
+    bpy.utils.register_class(BOBH_OT_apply_shader_to_mmd_model)
     bpy.types.Scene.material_directory = bpy.props.StringProperty(
         name="Material Directory",
         description="Directory for character materials",
@@ -160,8 +241,9 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(BOBH_PT_main_panel)
-    bpy.utils.unregister_class(BOBH_OT_import_shader_operator)
+    bpy.utils.unregister_class(BOBH_OT_import_shader)
     bpy.utils.unregister_class(BOBH_OT_set_character_material_directory)
+    bpy.utils.unregister_class(BOBH_OT_apply_shader_to_mmd_model)
     del bpy.types.Scene.material_directory
 
 
