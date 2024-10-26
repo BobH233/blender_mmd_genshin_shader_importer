@@ -303,10 +303,65 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
                                          outline_color_obj['b'],
                                          outline_color_obj['a'])
 
+    def replace_slot_material(self, mesh_obj, old_material_name, new_material_name):
+        new_material = bpy.data.materials.get(new_material_name)
+        if new_material is None:
+            raise BobHException(f"Material '{new_material_name}' not found.")
+        for slot in mesh_obj.material_slots:
+            if slot.material and slot.material.name == old_material_name:
+                slot.material = new_material
+                print(f"Replaced material '{old_material_name}' with '{new_material_name}'.")
+
+    def replace_mmd_material_with_shader(self, mesh_obj: bpy.types.Object):
+        face_detect_keywords = [
+            '面',
+        ]
+        hair_detect_keywords = [
+            '发',
+        ]
+        body_detect_keywords = [
+            '服',
+            '肌',
+        ]
         
+        materials = [slot.material for slot in mesh_obj.material_slots if slot.material]
+        for mat in materials:
+            mmd_base_tex_node: ShaderNodeTexImage = self.find_material_node('mmd_base_tex', mat.node_tree.nodes)
+            if mmd_base_tex_node is None:
+                self.report({'WARNING'}, f'无法识别mesh的材质: {mat.name}，请手动绑定这个材质')
+                continue
+            tex_image_name = mmd_base_tex_node.image.name
+            use_face_shader = False
+            use_hair_shader = False
+            use_body_shader = False
+            for face_kw in face_detect_keywords:
+                if face_kw in tex_image_name:
+                    use_face_shader = True
+                    break
+            for hair_kw in hair_detect_keywords:
+                if hair_kw in tex_image_name:
+                    use_hair_shader = True
+                    break
+            for body_kw in body_detect_keywords:
+                if body_kw in tex_image_name:
+                    use_body_shader = True
+                    break
+            if use_face_shader:
+                self.replace_slot_material(mesh_obj, mat.name, self._meterial_name_map['Face_Mat_Name'])
+            elif use_body_shader:
+                self.replace_slot_material(mesh_obj, mat.name, self._meterial_name_map['Body_Mat_Name'])
+            elif use_hair_shader:
+                self.replace_slot_material(mesh_obj, mat.name, self._meterial_name_map['Hair_Mat_Name'])
+            else:
+                self.report({'WARNING'}, f'无法识别mesh的材质: {mat.name}，请手动绑定这个材质')
+
+
 
     def execute(self, context):
         select_obj = context.active_object
+        if select_obj.type != 'MESH':
+            self.report({'ERROR'}, f'请选中一个MMD模型角色的mesh')
+            return {'CANCELLED'}
         mat_directory = context.scene.material_directory
         mmd_root_obj = self.find_mmd_root_object(select_obj)
         if not mmd_root_obj:
@@ -324,6 +379,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             self._outline_info = self.read_character_outline_info(mat_directory)
             self.apply_texture_to_material(mat_directory)
             self.apply_outline_color_to_material(mat_directory)
+            self.replace_mmd_material_with_shader(select_obj)
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
