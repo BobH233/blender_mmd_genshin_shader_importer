@@ -41,6 +41,5 @@ class BOBH_OT_import_shader(bpy.types.Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.bl_label = 'Select .blend'
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}

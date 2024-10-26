@@ -27,6 +27,7 @@ import os
 from .operators.apply_shader_to_mmd_mode import BOBH_OT_apply_shader_to_mmd_model
 from .operators.import_shader import BOBH_OT_import_shader
 from .operators.set_character_material_directory import BOBH_OT_set_character_material_directory
+from .operators.import_outline import BOBH_OT_import_outline
 
 class BOBH_PT_main_panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
@@ -43,10 +44,12 @@ class BOBH_PT_main_panel(bpy.types.Panel):
         current_box = box1
         row = current_box.row()
 
-        row.label(text='导入原神Shader', icon='MATERIAL')
+        row.label(text='一键导入原神Shader', icon='MATERIAL')
 
         row = current_box.row()
         row.operator('bobh.import_shader', text='导入原神Shader预设')
+        row = current_box.row()
+        row.operator('bobh.import_outline', text='导入原神描边预设')
 
         row = current_box.row()
         row.operator('bobh.set_material_directory', text='设置角色材质目录')
@@ -63,6 +66,7 @@ def register():
     bpy.utils.register_class(BOBH_OT_import_shader)
     bpy.utils.register_class(BOBH_OT_set_character_material_directory)
     bpy.utils.register_class(BOBH_OT_apply_shader_to_mmd_model)
+    bpy.utils.register_class(BOBH_OT_import_outline)
     bpy.types.Scene.material_directory = bpy.props.StringProperty(
         name='Material Directory',
         description='Directory for character materials',
@@ -72,10 +76,11 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(BOBH_PT_main_panel)
-    
+
     bpy.utils.unregister_class(BOBH_OT_import_shader)
     bpy.utils.unregister_class(BOBH_OT_set_character_material_directory)
     bpy.utils.unregister_class(BOBH_OT_apply_shader_to_mmd_model)
+    bpy.utils.unregister_class(BOBH_OT_import_outline)
     del bpy.types.Scene.material_directory
 
 
