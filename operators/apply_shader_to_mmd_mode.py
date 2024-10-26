@@ -1,6 +1,7 @@
 import bpy
 import json
 import os
+from bpy.types import ShaderNodeTexImage
 from ..bobh_exception import BobHException
 
 class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
@@ -61,6 +62,8 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         char_material.name = meterial_name_map['Hair_Outline_Mat_Name']
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Body_Outline_Mat_Name']
+
+        return meterial_name_map
     
     def read_character_outline_info(self, mat_directory):
         directory = os.path.join(mat_directory, 'Materials')
@@ -101,6 +104,35 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             'HairOutline': read_json_outlines(hair_json_path),
         }
         
+    def find_texture_file_path(self, end_with, mat_directory):
+        for f in os.listdir(mat_directory):
+            if f.endswith(end_with):
+                return os.path.join(mat_directory, f)
+        return ''
+
+    def apply_texture_to_material(self, mat_directory):
+        # >>> Face material <<<
+        face_mat_name = self._meterial_name_map['Face_Mat_Name']
+        face_mat = bpy.data.materials[face_mat_name]
+        assert face_mat.use_nodes, '材质节点一定使用了节点'
+        # find diffuse node
+        diffuse_texture_node: ShaderNodeTexImage = None
+        for node in face_mat.node_tree.nodes:
+            if node.name == 'Face_Diffuse':
+                diffuse_texture_node = node
+                break
+        assert diffuse_texture_node is not None, '找不到Diffuse节点'
+        # setup face diffuse node
+        face_diffuse_file = self.find_texture_file_path('_Face_Diffuse.png', mat_directory)
+        assert face_diffuse_file != '', '找不到脸部Diffuse贴图文件'
+        image_data = bpy.data.images.load(face_diffuse_file)
+        diffuse_texture_node.image = image_data
+        diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
+        diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+
+
+
+
 
 
     def execute(self, context):
@@ -118,8 +150,9 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         model_name = f'{mmd_root_obj.mmd_root.name}_{mmd_root_obj.mmd_root.name_e}_'
 
         try:
-            self.copy_meterial_for_character(model_name)
+            self._meterial_name_map = self.copy_meterial_for_character(model_name)
             self._outline_info = self.read_character_outline_info(mat_directory)
+            self.apply_texture_to_material(mat_directory)
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
