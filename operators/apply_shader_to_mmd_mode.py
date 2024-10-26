@@ -178,7 +178,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         lightmap1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(hair_shadowramp_file)
         shadowramp_texture_node.image = image_data
-        shadowramp_texture_node.image.colorspace_settings.name = 'Non-Color'
+        shadowramp_texture_node.image.colorspace_settings.name = 'sRGB'
         shadowramp_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
 
 
