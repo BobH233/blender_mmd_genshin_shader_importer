@@ -16,25 +16,10 @@ bl_info = {
     "name": "Bobh_mmd_genshin_shader_importer",
     "author": "BobH",
     "description": "import festivities genshin shader automatically to MMD Model",
-    "blender": (2, 80, 0),
+    "blender": (3, 60, 0),
     "version": (0, 0, 1),
-    "location": "",
-    "warning": "",
+    "location": "3D Viewport > Sidebar > BobHTool",
     "category": "Generic",
-}
-
-"""
-See YouTube tutorial here: https://youtu.be/Qyy_6N3JV3k
-"""
-
-bl_info = {
-    "name": "My Custom Panel",
-    "author": "Victor Stepanov",
-    "version": (0, 0, 1),
-    "blender": (2, 80, 0),
-    "location": "3D Viewport > Sidebar > My Custom Panel category",
-    "description": "My custom operator buttons",
-    "category": "Development",
 }
 
 # give Python access to Blender's functionality
@@ -50,17 +35,27 @@ class BOBH_PT_main_panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        scene = context.scene
+
         box1 = layout.box()
         current_box = box1
         row = current_box.row()
+
         row.label(text="导入原神Shader")
+
         row = current_box.row()
         row.operator("bobh.import_shader", text="导入原神Shader预设")
 
+        row = current_box.row()
+        row.operator("bobh.set_material_directory", text="设置材质目录")
+        row = current_box.row()
+        row.label(text=f"当前材质目录: {scene.material_directory}")
+
+
 class BOBH_OT_import_shader_operator(bpy.types.Operator):
-    bl_label = "Select .blend"
+    bl_label = "选择shader的.blend文件"
     bl_idname = "bobh.import_shader"
-    filepath: bpy.props.StringProperty(subtype="FILE_PATH")
+    filepath: bpy.props.StringProperty(subtype="FILE_PATH") # type: ignore
 
     MAT_LIST = [
         ('HoYoverse - Genshin Body', 'GI_Body'),
@@ -100,15 +95,74 @@ class BOBH_OT_import_shader_operator(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
+class BOBH_OT_set_character_material_directory(bpy.types.Operator):
+    bl_label = "选择角色解包材质目录"
+    bl_idname = "bobh.set_material_directory"
+    directory: bpy.props.StringProperty(subtype="DIR_PATH") # type: ignore
+
+    CHECK_MAT_LIST = [
+        '_Tex_Body_Diffuse.png',
+        '_Tex_Body_Lightmap.png',
+        '_Tex_Body_Shadow_Ramp.png',
+        '_Face_Diffuse.png',
+        '_Hair_Diffuse.png',
+        '_Hair_Lightmap.png',
+        '_Hair_Shadow_Ramp.png',
+    ]
+
+    CHECK_OUTLINE_LIST = [
+        '_Mat_Body.json',
+        '_Mat_Face.json',
+        '_Mat_Hair.json',
+    ]
+
+    def validate_path(self, path):
+        png_files = [f for f in os.listdir(path) if f.endswith('.png')]
+        missing_mat_files = [file for file in self.CHECK_MAT_LIST if not any(f.endswith(file) for f in png_files)]
+        if missing_mat_files:
+            raise Exception(f"目录缺少以下所需的材质文件: {', '.join(missing_mat_files)}")
+        materials_dir = os.path.join(path, "Materials")
+        if not os.path.isdir(materials_dir):
+            raise Exception("目录中缺少 'Materials' 文件夹。")
+        materials_files = [f for f in os.listdir(materials_dir)]
+        missing_outline_files = [file for file in self.CHECK_OUTLINE_LIST if not any(f.endswith(file) for f in materials_files)]
+        if missing_outline_files:
+            raise Exception(f"Materials 文件夹中缺少以下文件: {', '.join(missing_outline_files)}")
+
+    def execute(self, context):
+        if not self.directory:
+            return {'CANCELLED'}
+        try:
+            self.validate_path(self.directory)
+            context.scene.material_directory = self.directory
+            self.report({'INFO'}, f"材质目录设置为: {context.scene.material_directory}")
+            bpy.context.area.tag_redraw()
+        except Exception as e:
+            self.report({'ERROR'}, f"{str(e)}")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
 
 def register():
     bpy.utils.register_class(BOBH_PT_main_panel)
     bpy.utils.register_class(BOBH_OT_import_shader_operator)
+    bpy.utils.register_class(BOBH_OT_set_character_material_directory)
+    bpy.types.Scene.material_directory = bpy.props.StringProperty(
+        name="Material Directory",
+        description="Directory for character materials",
+        subtype="DIR_PATH"
+    )
 
 
 def unregister():
     bpy.utils.unregister_class(BOBH_PT_main_panel)
     bpy.utils.unregister_class(BOBH_OT_import_shader_operator)
+    bpy.utils.unregister_class(BOBH_OT_set_character_material_directory)
+    del bpy.types.Scene.material_directory
 
 
 if __name__ == "__main__":
