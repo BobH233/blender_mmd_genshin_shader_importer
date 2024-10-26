@@ -136,6 +136,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         face_diffuse_file = self.find_texture_file_path('_Face_Diffuse.png', mat_directory)
         assert face_diffuse_file != '', '找不到脸部Diffuse贴图文件'
         image_data = bpy.data.images.load(face_diffuse_file)
+        self._face_diffuse_image_data = image_data
         diffuse_texture_node.image = image_data
         diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
@@ -163,6 +164,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         assert lightmap1_texture_node is not None, '找不到LightmapUV1节点'
         assert shadowramp_texture_node is not None, '找不到Shadowramp节点'
         image_data = bpy.data.images.load(hair_diffuse_file)
+        self._hair_diffuse_image_data = image_data
         diffuse_texture_node.image = image_data
         diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
@@ -170,6 +172,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(hair_lightmap_file)
+        self._hair_lightmap_image_data = image_data
         lightmap_texture_node.image = image_data
         lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
         lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
@@ -204,6 +207,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         assert lightmap1_texture_node is not None, '找不到LightmapUV1节点'
         assert shadowramp_texture_node is not None, '找不到Shadowramp节点'
         image_data = bpy.data.images.load(body_diffuse_file)
+        self._body_diffuse_image_data = image_data
         diffuse_texture_node.image = image_data
         diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
@@ -211,6 +215,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(body_lightmap_file)
+        self._body_lightmap_image_data = image_data
         lightmap_texture_node.image = image_data
         lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
         lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
@@ -222,7 +227,83 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         shadowramp_texture_node.image.colorspace_settings.name = 'sRGB'
         shadowramp_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
 
+    def apply_outline_color_to_material(self, mat_directory):
+        # >>> tmp texture node definition <<<
+        diffuse_texture_node: ShaderNodeTexImage = None
+        lightmap_texture_node: ShaderNodeTexImage = None
+        outline_group_node: ShaderNodeGroup = None
 
+        # >>> Face outlines <<<
+        face_outline_mat_name = self._meterial_name_map['Face_Outline_Mat_Name']
+        face_outline_mat = bpy.data.materials[face_outline_mat_name]
+        assert face_outline_mat.use_nodes
+        diffuse_texture_node = self.find_material_node('Outline_Diffuse', face_outline_mat.node_tree.nodes)
+        outline_group_node = self.find_material_node('Outlines', face_outline_mat.node_tree.nodes)
+        assert diffuse_texture_node is not None, '找不到OutlineDiffuse节点'
+        assert outline_group_node is not None, '找不到Outlines节点'
+        diffuse_texture_node.image = self._face_diffuse_image_data
+        diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
+        diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        for i in range(1, 6):
+            color_input = outline_group_node.inputs[f'Outline Color {i}']
+            outline_color_obj = self._outline_info['FaceOutline'][f'Color{i}']
+            color_input.type = 'RGBA'
+            color_input.default_value = (outline_color_obj['r'], 
+                                         outline_color_obj['g'], 
+                                         outline_color_obj['b'],
+                                         outline_color_obj['a'])
+        
+        # >>> Hair outlines <<<
+        hair_outline_mat_name = self._meterial_name_map['Hair_Outline_Mat_Name']
+        hair_outline_mat = bpy.data.materials[hair_outline_mat_name]
+        assert hair_outline_mat.use_nodes
+        diffuse_texture_node = self.find_material_node('Outline_Diffuse', hair_outline_mat.node_tree.nodes)
+        lightmap_texture_node = self.find_material_node('Outline_Lightmap', hair_outline_mat.node_tree.nodes)
+        outline_group_node = self.find_material_node('Outlines', hair_outline_mat.node_tree.nodes)
+        assert diffuse_texture_node is not None, '找不到OutlineDiffuse节点'
+        assert lightmap_texture_node is not None, '找不到OutlineLightmap节点'
+        assert outline_group_node is not None, '找不到Outlines节点'
+        diffuse_texture_node.image = self._hair_diffuse_image_data
+        diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
+        diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        lightmap_texture_node.image = self._hair_lightmap_image_data
+        lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
+        lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        for i in range(1, 6):
+            color_input = outline_group_node.inputs[f'Outline Color {i}']
+            outline_color_obj = self._outline_info['HairOutline'][f'Color{i}']
+            color_input.type = 'RGBA'
+            color_input.default_value = (outline_color_obj['r'], 
+                                         outline_color_obj['g'], 
+                                         outline_color_obj['b'],
+                                         outline_color_obj['a'])
+        
+        # >>> Body outlines <<<
+        body_outline_mat_name = self._meterial_name_map['Body_Outline_Mat_Name']
+        body_outline_mat = bpy.data.materials[body_outline_mat_name]
+        assert body_outline_mat.use_nodes
+        diffuse_texture_node = self.find_material_node('Outline_Diffuse', body_outline_mat.node_tree.nodes)
+        lightmap_texture_node = self.find_material_node('Outline_Lightmap', body_outline_mat.node_tree.nodes)
+        outline_group_node = self.find_material_node('Outlines', body_outline_mat.node_tree.nodes)
+        assert diffuse_texture_node is not None, '找不到OutlineDiffuse节点'
+        assert lightmap_texture_node is not None, '找不到OutlineLightmap节点'
+        assert outline_group_node is not None, '找不到Outlines节点'
+        diffuse_texture_node.image = self._body_diffuse_image_data
+        diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
+        diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        lightmap_texture_node.image = self._body_lightmap_image_data
+        lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
+        lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        for i in range(1, 6):
+            color_input = outline_group_node.inputs[f'Outline Color {i}']
+            outline_color_obj = self._outline_info['BodyOutline'][f'Color{i}']
+            color_input.type = 'RGBA'
+            color_input.default_value = (outline_color_obj['r'], 
+                                         outline_color_obj['g'], 
+                                         outline_color_obj['b'],
+                                         outline_color_obj['a'])
+
+        
 
     def execute(self, context):
         select_obj = context.active_object
@@ -242,6 +323,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             self._meterial_name_map = self.copy_meterial_for_character(model_name)
             self._outline_info = self.read_character_outline_info(mat_directory)
             self.apply_texture_to_material(mat_directory)
+            self.apply_outline_color_to_material(mat_directory)
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
