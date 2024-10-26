@@ -22,6 +22,7 @@ class BOBH_OT_set_character_material_directory(bpy.types.Operator):
         '_Mat_Body.json',
         '_Mat_Face.json',
         '_Mat_Hair.json',
+        '_Mat_Dress.json',
     ]
 
     def validate_path(self, path):

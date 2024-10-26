@@ -181,6 +181,47 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         shadowramp_texture_node.image.colorspace_settings.name = 'sRGB'
         shadowramp_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
 
+        # >>> Body material <<<
+        body_mat_name = self._meterial_name_map['Body_Mat_Name']
+        body_mat = bpy.data.materials[body_mat_name]
+        assert body_mat.use_nodes, '材质节点一定使用了节点'
+        body_diffuse_file = self.find_texture_file_path('_Body_Diffuse.png', mat_directory)
+        body_lightmap_file = self.find_texture_file_path('_Body_Lightmap.png', mat_directory)
+        body_shadowramp_file = self.find_texture_file_path('_Body_Shadow_Ramp.png', mat_directory)
+        assert body_diffuse_file != '', '找不到身体Diffuse贴图文件'
+        assert body_lightmap_file != '', '找不到身体Lightmap贴图文件'
+        assert body_shadowramp_file != '', '找不到身体Shadowramp贴图文件'
+        diffuse_texture_node = self.find_material_node('Body_Diffuse_UV0', body_mat.node_tree.nodes)
+        diffuse1_texture_node = self.find_material_node('Body_Diffuse_UV1', body_mat.node_tree.nodes)
+        lightmap_texture_node = self.find_material_node('Body_Lightmap_UV0', body_mat.node_tree.nodes)
+        lightmap1_texture_node = self.find_material_node('Body_Lightmap_UV1', body_mat.node_tree.nodes)
+        shadowramp_group_node = self.find_material_node('Shadow Ramp', body_mat.node_tree.nodes)
+        assert shadowramp_group_node is not None, '找不到Shadowramp组'
+        shadowramp_texture_node = self.find_material_node('Body_Shadow_Ramp', shadowramp_group_node.node_tree.nodes)
+        assert diffuse_texture_node is not None, '找不到DiffuseUV0节点'
+        assert diffuse1_texture_node is not None, '找不到DiffuseUV1节点'
+        assert lightmap_texture_node is not None, '找不到LightmapUV0节点'
+        assert lightmap1_texture_node is not None, '找不到LightmapUV1节点'
+        assert shadowramp_texture_node is not None, '找不到Shadowramp节点'
+        image_data = bpy.data.images.load(body_diffuse_file)
+        diffuse_texture_node.image = image_data
+        diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
+        diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        diffuse1_texture_node.image = image_data
+        diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
+        diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        image_data = bpy.data.images.load(body_lightmap_file)
+        lightmap_texture_node.image = image_data
+        lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
+        lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        lightmap1_texture_node.image = image_data
+        lightmap1_texture_node.image.colorspace_settings.name = 'Non-Color'
+        lightmap1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        image_data = bpy.data.images.load(body_shadowramp_file)
+        shadowramp_texture_node.image = image_data
+        shadowramp_texture_node.image.colorspace_settings.name = 'sRGB'
+        shadowramp_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+
 
 
     def execute(self, context):
