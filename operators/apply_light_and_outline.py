@@ -43,7 +43,7 @@ class BOBH_OT_apply_light_and_outline(bpy.types.Operator):
                 print('已经附加了LightVector属性, 直接修改即可')
                 break
         if geo_modifier == None:
-            geo_modifier = mesh_obj.modifiers.new(name='Light Vector Geo Modifier', type    = 'NODES')
+            geo_modifier = mesh_obj.modifiers.new(name='Light Vector Geo Modifier', type = 'NODES')
             light_vector_node = bpy.data.node_groups.get("Light Vectors")
             if light_vector_node is None:
                 raise BobHException('找不到LightVector节点, 是否忘记导入shader预设了?')
@@ -66,7 +66,52 @@ class BOBH_OT_apply_light_and_outline(bpy.types.Operator):
         geo_modifier['Input_5'] = head_forward_obj
         geo_modifier['Input_6'] = head_up_obj
         
-    
+    def add_outline_geo_modifier(self, model_name, mesh_obj: bpy.types.Object):
+        # Get or create geo_modifier
+        geo_modifier: bpy.types.Modifier = None
+        for mod in mesh_obj.modifiers:
+            if mod.type == 'NODES' and mod.node_group and mod.node_group.name == "GI_Outline":
+                geo_modifier = mod
+                print('已经附加了GI_Outline属性, 直接修改即可')
+                break
+        if geo_modifier == None:
+            geo_modifier = mesh_obj.modifiers.new(name='Outline Geo Modifier', type = 'NODES')
+            outline_node = bpy.data.node_groups.get("GI_Outline")
+            if outline_node is None:
+                raise BobHException('找不到GI_Outline节点, 是否忘记导入shader预设了?')
+            geo_modifier.node_group = outline_node
+        
+        face_outline_mat = bpy.data.materials.get(f'GI_{model_name}_Face_Outline')
+        print(f'GI_{model_name}Face_Outline')
+        hair_outline_mat = bpy.data.materials.get(f'GI_{model_name}_Hair_Outline')
+        body_outline_mat = bpy.data.materials.get(f'GI_{model_name}_Body_Outline')
+        face_mat = bpy.data.materials.get(f'GI_{model_name}_Face')
+        hair_mat = bpy.data.materials.get(f'GI_{model_name}_Hair')
+        body_mat = bpy.data.materials.get(f'GI_{model_name}_Body')
+        assert face_outline_mat is not None, '找不到face_outline材质'
+        assert hair_outline_mat is not None, '找不到hair_outline材质'
+        assert body_outline_mat is not None, '找不到body_outline材质'
+        assert face_mat is not None, '找不到face材质'
+        assert hair_mat is not None, '找不到hair材质'
+        assert body_mat is not None, '找不到body材质'
+
+        geo_modifier['Input_10'] = hair_mat
+        geo_modifier['Input_5'] = hair_outline_mat
+        geo_modifier['Input_11'] = body_mat
+        geo_modifier['Input_9'] = body_outline_mat
+        geo_modifier['Input_14'] = face_mat
+        geo_modifier['Input_15'] = face_outline_mat
+
+        geo_modifier['Input_7'] = 1.0
+        geo_modifier['Input_12'] = True # Base Geometry
+
+        # Debug purposes...
+        # for key in geo_modifier.keys():
+        #     if key.startswith("Input"):
+        #         print(f"{key}: {geo_modifier[key]}")
+
+
+        
     def execute(self, context):
         select_obj = context.active_object
         if select_obj.type != 'MESH':
@@ -82,6 +127,7 @@ class BOBH_OT_apply_light_and_outline(bpy.types.Operator):
         try:
             self.set_head_empty_parent(model_name)
             self.add_light_vector_geo_modifier(model_name, select_obj)
+            self.add_outline_geo_modifier(model_name, select_obj)
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
