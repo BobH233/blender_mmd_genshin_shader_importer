@@ -355,6 +355,72 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             else:
                 self.report({'WARNING'}, f'无法识别mesh的材质: {mat.name}，请手动绑定这个材质')
 
+    def add_object_and_children_to_collection(self, obj, collection_name):
+        new_collection = bpy.data.collections.get(collection_name)
+        if not new_collection:
+            new_collection = bpy.data.collections.new(collection_name)
+            bpy.context.scene.collection.children.link(new_collection)
+        def add_to_collection_recursive(obj, collection):
+            if obj.name not in collection.objects:
+                collection.objects.link(obj)
+            for original_collection in obj.users_collection:
+                if original_collection != collection:
+                    original_collection.objects.unlink(obj)
+            for child in obj.children:
+                add_to_collection_recursive(child, collection)
+        add_to_collection_recursive(obj, new_collection)
+
+    def get_head_origin_position(self):
+        # TODO: use character's head bone position
+        return (0, -0.0113, 1.3269)
+
+    def get_head_forward_position(self):
+        # TODO: use character's head bone position
+        return (0, 3.11949, 1.3269)
+    
+    def get_head_up_position(self):
+        # TODO: use character's head bone position
+        return (0, -0.0113, -0.826729)
+
+    ''' 创建灯光方向对象和头部方向绑定对象 '''
+    def create_light_dir_and_head_empty(self, model_name, collection_name):
+        # >>> Light Direction <<<
+        light_template_object = bpy.data.objects['Light Direction Template']
+        if light_template_object is None:
+            raise BobHException('请先导入Shader预设')
+        model_light_object: bpy.types.Object = light_template_object.copy()
+        model_light_object.name = f'{model_name}Light Direction'
+        model_light_object.hide_render = False
+        model_light_object.hide_viewport = False
+        collection = bpy.data.collections[collection_name]
+        collection.objects.link(model_light_object)
+
+        # >>> Head binding <<<
+        head_origin_object: bpy.types.Object = bpy.data.objects.new(f'{model_name}Head Origin', None)
+        head_origin_object.empty_display_type = 'PLAIN_AXES'
+        head_origin_object.empty_display_size = 0.2
+        head_origin_object.delta_scale = (2.14208, 2.14208, 2.14208)
+        head_origin_object.location = self.get_head_origin_position()
+        self.add_object_and_children_to_collection(head_origin_object, collection_name)
+
+        head_forward_object: bpy.types.Object = bpy.data.objects.new(f'{model_name}Head Forward', None)
+        head_forward_object.empty_display_type = 'CUBE'
+        head_forward_object.empty_display_size = 0.2
+        head_forward_object.delta_location = (0, -3.91348, 0)
+        head_forward_object.delta_scale = (0.657891, 0.657891, 0.657891)
+        head_forward_object.location = self.get_head_forward_position()
+        # self.set_parent_keep_matrix_world(head_forward_object, head_origin_object)
+        self.add_object_and_children_to_collection(head_forward_object, collection_name)
+
+        head_up_object: bpy.types.Object = bpy.data.objects.new(f'{model_name}Head Up', None)
+        head_up_object.empty_display_type = 'CUBE'
+        head_up_object.empty_display_size = 0.2
+        head_up_object.delta_location = (0, 0, 2.69204)
+        head_up_object.delta_scale = (0.620684, 0.620684, 0.620684)
+        head_up_object.location = self.get_head_up_position()
+        # self.set_parent_keep_matrix_world(head_up_object, head_origin_object)
+        self.add_object_and_children_to_collection(head_up_object, collection_name)
+
 
 
     def execute(self, context):
@@ -373,13 +439,16 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             return {'CANCELLED'}
 
         model_name = f'{mmd_root_obj.mmd_root.name}_{mmd_root_obj.mmd_root.name_e}_'
+        collection_name = f'{model_name}_Collection'
 
         try:
-            self._meterial_name_map = self.copy_meterial_for_character(model_name)
-            self._outline_info = self.read_character_outline_info(mat_directory)
-            self.apply_texture_to_material(mat_directory)
-            self.apply_outline_color_to_material(mat_directory)
-            self.replace_mmd_material_with_shader(select_obj)
+            # self._meterial_name_map = self.copy_meterial_for_character(model_name)
+            # self._outline_info = self.read_character_outline_info(mat_directory)
+            # self.apply_texture_to_material(mat_directory)
+            # self.apply_outline_color_to_material(mat_directory)
+            # self.replace_mmd_material_with_shader(select_obj)
+            self.add_object_and_children_to_collection(mmd_root_obj, collection_name)
+            self.create_light_dir_and_head_empty(model_name, collection_name)
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
