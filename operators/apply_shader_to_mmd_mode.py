@@ -315,13 +315,17 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
     def replace_mmd_material_with_shader(self, mesh_obj: bpy.types.Object):
         face_detect_keywords = [
             '面',
+            '颜',
         ]
         hair_detect_keywords = [
             '发',
+            '髪',
+            '髮'
         ]
         body_detect_keywords = [
             '服',
             '肌',
+            '衣',
         ]
         
         materials = [slot.material for slot in mesh_obj.material_slots if slot.material]
