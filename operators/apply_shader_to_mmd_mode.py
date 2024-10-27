@@ -151,34 +151,34 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         assert hair_diffuse_file != '', '找不到头发Diffuse贴图文件'
         assert hair_lightmap_file != '', '找不到头发Lightmap贴图文件'
         assert hair_shadowramp_file != '', '找不到头发Shadowramp贴图文件'
-        diffuse_texture_node = self.find_material_node('Hair_Diffuse_UV0', hair_mat.node_tree.nodes)
-        diffuse1_texture_node = self.find_material_node('Hair_Diffuse_UV1', hair_mat.node_tree.nodes)
-        lightmap_texture_node = self.find_material_node('Hair_Lightmap_UV0', hair_mat.node_tree.nodes)
-        lightmap1_texture_node = self.find_material_node('Hair_Lightmap_UV1', hair_mat.node_tree.nodes)
+        diffuse_texture_node = self.find_material_node('Body_Diffuse_UV0', hair_mat.node_tree.nodes)
+        # diffuse1_texture_node = self.find_material_node('Hair_Diffuse_UV1', hair_mat.node_tree.nodes)
+        lightmap_texture_node = self.find_material_node('Body_Lightmap_UV0', hair_mat.node_tree.nodes)
+        # lightmap1_texture_node = self.find_material_node('Hair_Lightmap_UV1', hair_mat.node_tree.nodes)
         shadowramp_group_node = self.find_material_node('Shadow Ramp', hair_mat.node_tree.nodes)
         assert shadowramp_group_node is not None, '找不到Shadowramp组'
         shadowramp_texture_node = self.find_material_node('Hair_Shadow_Ramp', shadowramp_group_node.node_tree.nodes)
         assert diffuse_texture_node is not None, '找不到DiffuseUV0节点'
-        assert diffuse1_texture_node is not None, '找不到DiffuseUV1节点'
+        # assert diffuse1_texture_node is not None, '找不到DiffuseUV0节点'
         assert lightmap_texture_node is not None, '找不到LightmapUV0节点'
-        assert lightmap1_texture_node is not None, '找不到LightmapUV1节点'
+        # assert lightmap1_texture_node is not None, '找不到LightmapUV0节点'
         assert shadowramp_texture_node is not None, '找不到Shadowramp节点'
         image_data = bpy.data.images.load(hair_diffuse_file)
         self._hair_diffuse_image_data = image_data
         diffuse_texture_node.image = image_data
         diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
-        diffuse1_texture_node.image = image_data
-        diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
-        diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        # diffuse1_texture_node.image = image_data
+        # diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
+        # diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(hair_lightmap_file)
         self._hair_lightmap_image_data = image_data
         lightmap_texture_node.image = image_data
         lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
         lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
-        lightmap1_texture_node.image = image_data
-        lightmap1_texture_node.image.colorspace_settings.name = 'Non-Color'
-        lightmap1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        # lightmap1_texture_node.image = image_data
+        # lightmap1_texture_node.image.colorspace_settings.name = 'Non-Color'
+        # lightmap1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(hair_shadowramp_file)
         shadowramp_texture_node.image = image_data
         shadowramp_texture_node.image.colorspace_settings.name = 'sRGB'
@@ -195,33 +195,33 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         assert body_lightmap_file != '', '找不到身体Lightmap贴图文件'
         assert body_shadowramp_file != '', '找不到身体Shadowramp贴图文件'
         diffuse_texture_node = self.find_material_node('Body_Diffuse_UV0', body_mat.node_tree.nodes)
-        diffuse1_texture_node = self.find_material_node('Body_Diffuse_UV1', body_mat.node_tree.nodes)
+        # diffuse1_texture_node = self.find_material_node('Body_Diffuse_UV0', body_mat.node_tree.nodes)
         lightmap_texture_node = self.find_material_node('Body_Lightmap_UV0', body_mat.node_tree.nodes)
-        lightmap1_texture_node = self.find_material_node('Body_Lightmap_UV1', body_mat.node_tree.nodes)
+        # lightmap1_texture_node = self.find_material_node('Body_Lightmap_UV0', body_mat.node_tree.nodes)
         shadowramp_group_node = self.find_material_node('Shadow Ramp', body_mat.node_tree.nodes)
         assert shadowramp_group_node is not None, '找不到Shadowramp组'
         shadowramp_texture_node = self.find_material_node('Body_Shadow_Ramp', shadowramp_group_node.node_tree.nodes)
         assert diffuse_texture_node is not None, '找不到DiffuseUV0节点'
-        assert diffuse1_texture_node is not None, '找不到DiffuseUV1节点'
+        # assert diffuse1_texture_node is not None, '找不到DiffuseUV0节点'
         assert lightmap_texture_node is not None, '找不到LightmapUV0节点'
-        assert lightmap1_texture_node is not None, '找不到LightmapUV1节点'
+        # assert lightmap1_texture_node is not None, '找不到LightmapUV0节点'
         assert shadowramp_texture_node is not None, '找不到Shadowramp节点'
         image_data = bpy.data.images.load(body_diffuse_file)
         self._body_diffuse_image_data = image_data
         diffuse_texture_node.image = image_data
         diffuse_texture_node.image.colorspace_settings.name = 'sRGB'
         diffuse_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
-        diffuse1_texture_node.image = image_data
-        diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
-        diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        # diffuse1_texture_node.image = image_data
+        # diffuse1_texture_node.image.colorspace_settings.name = 'sRGB'
+        # diffuse1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(body_lightmap_file)
         self._body_lightmap_image_data = image_data
         lightmap_texture_node.image = image_data
         lightmap_texture_node.image.colorspace_settings.name = 'Non-Color'
         lightmap_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
-        lightmap1_texture_node.image = image_data
-        lightmap1_texture_node.image.colorspace_settings.name = 'Non-Color'
-        lightmap1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
+        # lightmap1_texture_node.image = image_data
+        # lightmap1_texture_node.image.colorspace_settings.name = 'Non-Color'
+        # lightmap1_texture_node.image.alpha_mode = 'CHANNEL_PACKED'
         image_data = bpy.data.images.load(body_shadowramp_file)
         shadowramp_texture_node.image = image_data
         shadowramp_texture_node.image.colorspace_settings.name = 'sRGB'
@@ -442,11 +442,11 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         collection_name = f'{model_name}_Collection'
 
         try:
-            # self._meterial_name_map = self.copy_meterial_for_character(model_name)
-            # self._outline_info = self.read_character_outline_info(mat_directory)
-            # self.apply_texture_to_material(mat_directory)
-            # self.apply_outline_color_to_material(mat_directory)
-            # self.replace_mmd_material_with_shader(select_obj)
+            self._meterial_name_map = self.copy_meterial_for_character(model_name)
+            self._outline_info = self.read_character_outline_info(mat_directory)
+            self.apply_texture_to_material(mat_directory)
+            self.apply_outline_color_to_material(mat_directory)
+            self.replace_mmd_material_with_shader(select_obj)
             self.add_object_and_children_to_collection(mmd_root_obj, collection_name)
             self.create_light_dir_and_head_empty(model_name, collection_name)
         except BobHException as e:
