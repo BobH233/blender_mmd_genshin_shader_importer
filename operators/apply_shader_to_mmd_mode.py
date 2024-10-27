@@ -424,6 +424,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
 
 
     def execute(self, context):
+        context.scene.view_settings.view_transform = 'Standard'
         select_obj = context.active_object
         if select_obj.type != 'MESH':
             self.report({'ERROR'}, f'请选中一个MMD模型角色的mesh')
