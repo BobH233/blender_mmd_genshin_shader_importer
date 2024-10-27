@@ -7,14 +7,13 @@ class BOBH_OT_import_outline(bpy.types.Operator):
     bl_idname = 'bobh.import_outline'
     filepath: bpy.props.StringProperty(subtype='FILE_PATH') # type: ignore
 
-
-    def append_group_node_group(self, filepath, group_name, import_name):
-        node_group_path = os.path.join(filepath, 'NodeTree', group_name)
-        bpy.ops.wm.append(
-            filepath=node_group_path,
-            directory=os.path.join(filepath, 'NodeTree'),
-            filename=group_name
-        )
+    def try_rename_node_group(self, filepath, group_name, import_name):
+        # node_group_path = os.path.join(filepath, 'NodeTree', group_name)
+        # bpy.ops.wm.append(
+        #     filepath=node_group_path,
+        #     directory=os.path.join(filepath, 'NodeTree'),
+        #     filename=group_name
+        # )
         if group_name in bpy.data.node_groups:
             imported_group = bpy.data.node_groups[group_name]
             imported_group.name = import_name
@@ -29,7 +28,14 @@ class BOBH_OT_import_outline(bpy.types.Operator):
             return {'CANCELLED'}
         
         try:
-            self.append_group_node_group(self.filepath, 'HoYoverse - Genshin Impact Outlines', 'GI_Outline')
+            with bpy.data.libraries.load(self.filepath, link=False) as (data_from, data_to):
+                target_ng = []
+                for src_ng in data_from.node_groups:
+                    if src_ng == 'HoYoverse - Genshin Impact Outlines':
+                        print(f"importing node_group: {src_ng}")
+                        target_ng.append(src_ng)
+                data_to.node_groups = target_ng
+            self.try_rename_node_group(self.filepath, 'HoYoverse - Genshin Impact Outlines', 'GI_Outline')
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
