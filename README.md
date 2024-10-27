@@ -30,7 +30,7 @@ Goo Engine 4.1
 
 在Blender内，使用 mmd tools 导入一个 pmx 原神模型，然后选中该模型的mesh部分
 
-在3d视图按下键盘N打开侧工具栏，选中"BobH"栏，打开该插件的面板
+在3d视图按下键盘N打开侧工具栏，选中"BobHTool"栏，打开该插件的面板
 
 点击"导入原神Shader预设"，并选择之前下载的 `HoYoverse - Genshin Impact v3.4.blend`文件
 
