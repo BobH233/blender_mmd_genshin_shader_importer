@@ -75,13 +75,31 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         def read_json_outlines(json_path):
             with open(json_path, 'r') as file:
                 json_obj = json.load(file)
-            return {
-                'Color1': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor'],
-                'Color2': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor2'],
-                'Color3': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor3'],
-                'Color4': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor4'],
-                'Color5': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor5'],
-            }
+
+            def find_in_list(arr, key):
+                for item in arr:
+                    if item['Key'] == key:
+                        return item['Value']
+                return None
+
+            if isinstance(json_obj['m_SavedProperties']['m_Colors'], dict):
+                return {
+                    'Color1': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor'],
+                    'Color2': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor2'],
+                    'Color3': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor3'],
+                    'Color4': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor4'],
+                    'Color5': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor5'],
+                }
+            elif isinstance(json_obj['m_SavedProperties']['m_Colors'], list):
+                return {
+                    'Color1': find_in_list(json_obj['m_SavedProperties']['m_Colors'], '_OutlineColor'),
+                    'Color2': find_in_list(json_obj['m_SavedProperties']['m_Colors'], '_OutlineColor2'),
+                    'Color3': find_in_list(json_obj['m_SavedProperties']['m_Colors'], '_OutlineColor3'),
+                    'Color4': find_in_list(json_obj['m_SavedProperties']['m_Colors'], '_OutlineColor4'),
+                    'Color5': find_in_list(json_obj['m_SavedProperties']['m_Colors'], '_OutlineColor5'),
+                }
+            
+            raise BobHException('Unknow json type')
 
         for file in os.listdir(directory):
             full_path = os.path.join(directory, file)
@@ -326,6 +344,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             '服',
             '肌',
             '衣',
+            '体',
         ]
         
         materials = [slot.material for slot in mesh_obj.material_slots if slot.material]
