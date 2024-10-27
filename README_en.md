@@ -4,6 +4,8 @@
 
 Goo Engine 4.1
 
+Goo Engine 3.6
+
 Other versions have not been tested yet.
 
 ## Features Supported

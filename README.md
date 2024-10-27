@@ -6,6 +6,8 @@
 
 Goo Engine 4.1
 
+Goo Engine 3.6
+
 其他版本待测试
 
 ## 支持特性
