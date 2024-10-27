@@ -370,25 +370,29 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
                 add_to_collection_recursive(child, collection)
         add_to_collection_recursive(obj, new_collection)
 
-    def get_head_origin_position(self):
-        # TODO: use character's head bone position
-        return (0, -0.0113, 1.3269)
+    def location_add(self, x, y):
+        return tuple(a + b for a, b in zip(x, y))
 
-    def get_head_forward_position(self):
+    def get_head_origin_position(self, mesh_location):
         # TODO: use character's head bone position
-        return (0, 3.11949, 1.3269)
+        return self.location_add((0, -0.0113, 1.3269), mesh_location)
+
+    def get_head_forward_position(self, mesh_location):
+        # TODO: use character's head bone position
+        return self.location_add((0, 3.11949, 1.3269), mesh_location)
     
-    def get_head_up_position(self):
+    def get_head_up_position(self, mesh_location):
         # TODO: use character's head bone position
-        return (0, -0.0113, -0.826729)
+        return self.location_add((0, -0.0113, -0.826729), mesh_location)
 
     ''' 创建灯光方向对象和头部方向绑定对象 '''
-    def create_light_dir_and_head_empty(self, model_name, collection_name):
+    def create_light_dir_and_head_empty(self, model_name, collection_name, mesh_location):
         # >>> Light Direction <<<
         light_template_object = bpy.data.objects['Light Direction Template']
         if light_template_object is None:
             raise BobHException('请先导入Shader预设')
         model_light_object: bpy.types.Object = light_template_object.copy()
+        model_light_object.location = mesh_location
         model_light_object.name = f'{model_name}Light Direction'
         model_light_object.hide_render = False
         model_light_object.hide_viewport = False
@@ -400,7 +404,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         head_origin_object.empty_display_type = 'PLAIN_AXES'
         head_origin_object.empty_display_size = 0.2
         head_origin_object.delta_scale = (2.14208, 2.14208, 2.14208)
-        head_origin_object.location = self.get_head_origin_position()
+        head_origin_object.location = self.get_head_origin_position(mesh_location)
         self.add_object_and_children_to_collection(head_origin_object, collection_name)
 
         head_forward_object: bpy.types.Object = bpy.data.objects.new(f'{model_name}Head Forward', None)
@@ -408,7 +412,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         head_forward_object.empty_display_size = 0.2
         head_forward_object.delta_location = (0, -3.91348, 0)
         head_forward_object.delta_scale = (0.657891, 0.657891, 0.657891)
-        head_forward_object.location = self.get_head_forward_position()
+        head_forward_object.location = self.get_head_forward_position(mesh_location)
         # self.set_parent_keep_matrix_world(head_forward_object, head_origin_object)
         self.add_object_and_children_to_collection(head_forward_object, collection_name)
 
@@ -417,7 +421,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         head_up_object.empty_display_size = 0.2
         head_up_object.delta_location = (0, 0, 2.69204)
         head_up_object.delta_scale = (0.620684, 0.620684, 0.620684)
-        head_up_object.location = self.get_head_up_position()
+        head_up_object.location = self.get_head_up_position(mesh_location)
         # self.set_parent_keep_matrix_world(head_up_object, head_origin_object)
         self.add_object_and_children_to_collection(head_up_object, collection_name)
 
@@ -438,6 +442,8 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         if (not mat_directory) or (mat_directory == ''):
             self.report({'ERROR'}, f'请指定要导入角色的材质目录')
             return {'CANCELLED'}
+        
+        mesh_location = select_obj.matrix_world.to_translation()
 
         model_name = f'{mmd_root_obj.mmd_root.name}_{mmd_root_obj.mmd_root.name_e}_'
         collection_name = f'{model_name}_Collection'
@@ -449,7 +455,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             self.apply_outline_color_to_material(mat_directory)
             self.replace_mmd_material_with_shader(select_obj)
             self.add_object_and_children_to_collection(mmd_root_obj, collection_name)
-            self.create_light_dir_and_head_empty(model_name, collection_name)
+            self.create_light_dir_and_head_empty(model_name, collection_name, mesh_location)
         except BobHException as e:
             self.report({'ERROR'}, f'{e}')
             return {'CANCELLED'}
