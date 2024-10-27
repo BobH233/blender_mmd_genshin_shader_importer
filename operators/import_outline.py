@@ -32,7 +32,7 @@ class BOBH_OT_import_outline(bpy.types.Operator):
                 target_ng = []
                 for src_ng in data_from.node_groups:
                     if src_ng == 'HoYoverse - Genshin Impact Outlines':
-                        print(f"importing node_group: {src_ng}")
+                        print(f'importing node_group: {src_ng}')
                         target_ng.append(src_ng)
                 data_to.node_groups = target_ng
             self.try_rename_node_group(self.filepath, 'HoYoverse - Genshin Impact Outlines', 'GI_Outline')

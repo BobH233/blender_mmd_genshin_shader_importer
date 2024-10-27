@@ -23,12 +23,6 @@ class BOBH_OT_import_shader(bpy.types.Operator):
     ]
 
     def try_rename_node_group(self, filepath, group_name, import_name):
-        # node_group_path = os.path.join(filepath, 'NodeTree', group_name)
-        # bpy.ops.wm.append(
-        #     filepath=node_group_path,
-        #     directory=os.path.join(filepath, 'NodeTree'),
-        #     filename=group_name
-        # )
         if group_name in bpy.data.node_groups:
             imported_group = bpy.data.node_groups[group_name]
             imported_group.name = import_name
@@ -37,8 +31,6 @@ class BOBH_OT_import_shader(bpy.types.Operator):
             raise BobHException(f'无法导入节点组{group_name}, 检查blend文件路径是否正确')
 
     def try_rename_material(self, filepath, origin_name, import_name):
-        # material_path = material_path = os.path.join(filepath, 'NodeTree', 'Material', origin_name)
-        # bpy.ops.wm.append(filepath=material_path, directory=os.path.join(self.filepath, 'Material'), filename=origin_name)
         if origin_name in bpy.data.materials:
             imported_material = bpy.data.materials[origin_name]
             imported_material.name = import_name
@@ -47,8 +39,6 @@ class BOBH_OT_import_shader(bpy.types.Operator):
             raise BobHException(f'无法导入材质{origin_name}, 检查blend文件路径是否正确')
     
     def try_rename_and_hide_objects(self, filepath, origin_name, import_name, hide=True):
-        # object_path = os.path.join(filepath, "Object", origin_name)
-        # bpy.ops.wm.append(filepath=object_path, directory=os.path.join(self.filepath, 'Object'), filename=origin_name)
         if origin_name in bpy.data.objects:
             imported_object = bpy.data.objects[origin_name]
             imported_object.name = import_name
@@ -76,15 +66,15 @@ class BOBH_OT_import_shader(bpy.types.Operator):
                 target_ng = []
                 for src_mat in data_from.materials:
                     if src_mat in desire_mat_name:
-                        print(f"importing mat: {src_mat}")
+                        print(f'importing mat: {src_mat}')
                         target_mat.append(src_mat)
                 for src_obj in data_from.objects:
                     if src_obj in desire_obj_name:
-                        print(f"importing obj: {src_obj}")
+                        print(f'importing obj: {src_obj}')
                         target_obj.append(src_obj)
                 for src_ng in data_from.node_groups:
                     if src_ng in desire_ng_name:
-                        print(f"importing node_group: {src_ng}")
+                        print(f'importing node_group: {src_ng}')
                         target_ng.append(src_ng)
                 data_to.materials = target_mat
                 data_to.objects = target_obj
