@@ -1,6 +1,6 @@
 # MMD模型一键导入Festivities原神风格shader
 
-[English]()
+[English](./README_en.md)
 
 ## 已测试版本
 
