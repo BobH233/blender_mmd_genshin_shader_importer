@@ -29,6 +29,7 @@ from .operators.import_shader import BOBH_OT_import_shader
 from .operators.set_character_material_directory import BOBH_OT_set_character_material_directory
 from .operators.import_outline import BOBH_OT_import_outline
 from .operators.apply_light_and_outline import BOBH_OT_apply_light_and_outline
+from .operators.import_and_apply_postprocess import BOBH_OT_import_and_apply_postprocess
 
 class BOBH_PT_main_panel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
@@ -63,6 +64,9 @@ class BOBH_PT_main_panel(bpy.types.Panel):
         row = current_box.row()
         row.operator('bobh.apply_light_and_outline', text='应用灯光和描边效果')
 
+        row = current_box.row()
+        row.operator('bobh.import_and_apply_postprocess', text='导入并应用后处理')
+
 
 def register():
     bpy.utils.register_class(BOBH_PT_main_panel)
@@ -72,6 +76,7 @@ def register():
     bpy.utils.register_class(BOBH_OT_apply_shader_to_mmd_model)
     bpy.utils.register_class(BOBH_OT_import_outline)
     bpy.utils.register_class(BOBH_OT_apply_light_and_outline)
+    bpy.utils.register_class(BOBH_OT_import_and_apply_postprocess)
 
     bpy.types.Scene.material_directory = bpy.props.StringProperty(
         name='Material Directory',
@@ -88,6 +93,7 @@ def unregister():
     bpy.utils.unregister_class(BOBH_OT_apply_shader_to_mmd_model)
     bpy.utils.unregister_class(BOBH_OT_import_outline)
     bpy.utils.unregister_class(BOBH_OT_apply_light_and_outline)
+    bpy.utils.unregister_class(BOBH_OT_import_and_apply_postprocess)
 
     del bpy.types.Scene.material_directory
 
