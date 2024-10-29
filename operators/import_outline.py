@@ -8,12 +8,6 @@ class BOBH_OT_import_outline(bpy.types.Operator):
     filepath: bpy.props.StringProperty(subtype='FILE_PATH') # type: ignore
 
     def try_rename_node_group(self, filepath, group_name, import_name):
-        # node_group_path = os.path.join(filepath, 'NodeTree', group_name)
-        # bpy.ops.wm.append(
-        #     filepath=node_group_path,
-        #     directory=os.path.join(filepath, 'NodeTree'),
-        #     filename=group_name
-        # )
         if group_name in bpy.data.node_groups:
             imported_group = bpy.data.node_groups[group_name]
             imported_group.name = import_name
