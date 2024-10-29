@@ -44,6 +44,8 @@ Goo Engine 3.6
 
 完成材质修复后，点击"应用灯光和描边效果"即可完成一键导入
 
+如果希望追加后处理节点，请点击"导入并应用后处理"，随后在blender的"合成"面板，即可查看到已经导入并应用的后处理节点
+
 ## 特别感谢
 
 [@Festivities](https://github.com/festivities): Shader 作者
