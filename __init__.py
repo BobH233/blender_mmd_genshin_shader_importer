@@ -36,7 +36,7 @@ class BOBH_PT_main_panel(bpy.types.Panel):
     bl_region_type = 'UI'
 
     bl_category = 'BobHTool'
-    bl_label = 'BobHTool'
+    bl_label = 'GenshinShaderImporter'
 
     def draw(self, context):
         layout = self.layout
