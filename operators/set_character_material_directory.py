@@ -8,7 +8,8 @@ class BOBH_OT_set_character_material_directory(bpy.types.Operator):
     bl_idname = 'bobh.set_material_directory'
     directory: bpy.props.StringProperty(subtype='DIR_PATH') # type: ignore
 
-    CHECK_MAT_LIST = [
+    # 必需的材质文件列表
+    REQUIRED_MAT_FILES = [
         '_Tex_Body_Diffuse.png',
         '_Tex_Body_Lightmap.png',
         '_Tex_Body_Shadow_Ramp.png',
@@ -18,25 +19,44 @@ class BOBH_OT_set_character_material_directory(bpy.types.Operator):
         '_Hair_Shadow_Ramp.png',
     ]
 
-    CHECK_OUTLINE_LIST = [
+    # 必需的描边文件列表
+    REQUIRED_OUTLINE_FILES = [
         '_Mat_Body.json',
         '_Mat_Face.json',
         '_Mat_Hair.json',
+    ]
+
+    # 可选的描边文件列表
+    OPTIONAL_OUTLINE_FILES = [
         '_Mat_Dress.json',
     ]
 
     def validate_path(self, path):
+        """验证材质目录结构"""
+        # 检查主目录下的PNG文件
         png_files = [f for f in os.listdir(path) if f.endswith('.png')]
-        missing_mat_files = [file for file in self.CHECK_MAT_LIST if not any(f.endswith(file) for f in png_files)]
+        missing_mat_files = [file for file in self.REQUIRED_MAT_FILES 
+                           if not any(f.endswith(file) for f in png_files)]
         if missing_mat_files:
-            raise BobHException(f'目录缺少以下所需的材质文件: {", ".join(missing_mat_files)}')
+            raise BobHException(f'目录缺少以下必需的材质文件: {", ".join(missing_mat_files)}')
+
+        # 检查Materials子目录
         materials_dir = os.path.join(path, 'Materials')
         if not os.path.isdir(materials_dir):
-            raise BobHException('目录中缺少 "Materials" 文件夹。')
+            raise BobHException('目录中缺少 "Materials" 文件夹')
+
+        # 检查必需的描边文件
         materials_files = [f for f in os.listdir(materials_dir)]
-        missing_outline_files = [file for file in self.CHECK_OUTLINE_LIST if not any(f.endswith(file) for f in materials_files)]
-        if missing_outline_files:
-            raise BobHException(f'Materials 文件夹中缺少以下文件: {", ".join(missing_outline_files)}')
+        missing_required_outline = [file for file in self.REQUIRED_OUTLINE_FILES 
+                                  if not any(f.endswith(file) for f in materials_files)]
+        if missing_required_outline:
+            raise BobHException(f'Materials 文件夹中缺少以下必需文件: {", ".join(missing_required_outline)}')
+
+        # 检查可选的描边文件
+        missing_optional_outline = [file for file in self.OPTIONAL_OUTLINE_FILES 
+                                  if not any(f.endswith(file) for f in materials_files)]
+        if missing_optional_outline:
+            self.report({'WARNING'}, f'Materials 文件夹中缺少以下可选文件: {", ".join(missing_optional_outline)}')
 
     def execute(self, context):
         if not self.directory:
