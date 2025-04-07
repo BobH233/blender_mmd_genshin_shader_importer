@@ -26,10 +26,6 @@ Goo Engine 4.1
 
 ## 使用方法
 
-下载 [克里斯提亚娜](https://www.bilibili.com/video/BV1wradeKEvN/) 视频简介中修改过的 原神风格渲染 Shader 文件
-
-获得以下三个文件: `HoYoverse - Genshin Impact v3.4.blend`, `HoYoverse - Genshin Impact Outlines v3.blend`, `HoYoverse - Genshin Impact Post-Processing.blend`
-
 安装 [mmd tools插件](https://github.com/UuuNyaa/blender_mmd_tools)
 
 安装本插件
@@ -37,10 +33,6 @@ Goo Engine 4.1
 在Blender内，使用 mmd tools 导入一个 pmx 原神模型，然后选中该模型的mesh部分
 
 在3d视图按下键盘N打开侧工具栏，选中"BobHTool"栏，打开该插件的面板
-
-点击"导入原神Shader预设"，并选择之前下载的 `HoYoverse - Genshin Impact v3.4.blend`文件
-
-点击"导入原神描边预设"，并选择之前下载的 `HoYoverse - Genshin Impact Outlines v3.blend`文件
 
 点击"导入角色材质目录", 并选择对应角色解包的材质目录(你可以在[GI-Assets](https://github.com/zeroruka/GI-Assets)项目获得这些资源)
 
