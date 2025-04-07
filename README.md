@@ -4,6 +4,12 @@
 
 ## 已测试版本
 
+Blender 3.6
+
+Blender 4.2
+
+Blender 4.4
+
 Goo Engine 4.1
 
 其他版本待测试
