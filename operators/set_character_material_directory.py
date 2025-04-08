@@ -26,9 +26,10 @@ class BOBH_OT_set_character_material_directory(bpy.types.Operator):
         '_Mat_Hair.json',
     ]
 
-    # 可选的描边文件列表
+    # 可选的描边文件列表（_Mat_Dress.json和_Mat_Leather.json作用相同，任选其一即可）
     OPTIONAL_OUTLINE_FILES = [
         '_Mat_Dress.json',
+        '_Mat_Leather.json',
     ]
 
     def validate_path(self, path):
@@ -52,11 +53,13 @@ class BOBH_OT_set_character_material_directory(bpy.types.Operator):
         if missing_required_outline:
             raise BobHException(f'Materials 文件夹中缺少以下必需文件: {", ".join(missing_required_outline)}')
 
-        # 检查可选的描边文件
-        missing_optional_outline = [file for file in self.OPTIONAL_OUTLINE_FILES 
-                                  if not any(f.endswith(file) for f in materials_files)]
-        if missing_optional_outline:
-            self.report({'WARNING'}, f'Materials 文件夹中缺少以下可选文件: {", ".join(missing_optional_outline)}')
+        # 检查可选的描边文件（至少存在其中一个即可）
+        has_optional_outline = any(
+            any(f.endswith(file) for f in materials_files)
+            for file in self.OPTIONAL_OUTLINE_FILES
+        )
+        if not has_optional_outline:
+            self.report({'WARNING'}, f'Materials 文件夹中缺少以下可选文件(任选其一即可): {", ".join(self.OPTIONAL_OUTLINE_FILES)}')
 
     def execute(self, context):
         if not self.directory:
