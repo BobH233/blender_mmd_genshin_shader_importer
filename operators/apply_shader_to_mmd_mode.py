@@ -27,6 +27,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         if group_name in bpy.data.node_groups:
             imported_group = bpy.data.node_groups[group_name]
             imported_group.name = import_name
+            imported_group.use_fake_user = True  # 防止被自动清理
             return True
         else:
             raise BobHException(f'无法导入节点组{group_name}, 检查blend文件路径是否正确')
@@ -35,6 +36,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         if origin_name in bpy.data.materials:
             imported_material = bpy.data.materials[origin_name]
             imported_material.name = import_name
+            imported_material.use_fake_user = True  # 防止被自动清理
             return True
         else:
             raise BobHException(f'无法导入材质{origin_name}, 检查blend文件路径是否正确')
@@ -49,6 +51,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             for collection in imported_object.users_collection:
                 collection.objects.unlink(imported_object)
             bpy.context.scene.collection.objects.link(imported_object)
+            # 对象不需要fake user，因为会被场景引用
         else:
             raise BobHException(f'无法导入物体{origin_name}, 检查blend文件路径是否正确')
 
@@ -61,6 +64,10 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             raise BobHException('Shader预设文件未找到，请检查插件安装是否完整')
         
         try:
+            # 先检查是否已有预设资源，避免重复导入
+            if self.guard_shader_exist():
+                return
+                
             # 导入blend文件中的资源
             with bpy.data.libraries.load(blend_file, link=False) as (data_from, data_to):
                 # 准备要导入的资源名称列表
@@ -73,7 +80,7 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
                 data_to.objects = [name for name in data_from.objects if name in desire_obj_name]
                 data_to.node_groups = [name for name in data_from.node_groups if name in desire_ng_name]
             
-            # 重命名导入的资源
+            # 重命名导入的资源并设置保护
             for mat_name, import_name in self.MAT_LIST:
                 self.try_rename_material(mat_name, import_name)
                 
@@ -82,6 +89,10 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
                 
             for ng_name, import_name in self.NODE_GROUP_LIST:
                 self.try_rename_node_group(ng_name, import_name)
+            
+            # 双重检查确保资源已正确导入
+            if not self.guard_shader_exist():
+                raise BobHException('Shader预设导入后验证失败')
             
         except Exception as e:
             raise BobHException(f'导入Shader预设时发生错误: {str(e)}')
@@ -92,15 +103,30 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         return obj
 
     def guard_shader_exist(self):
-        imported_mat_name = [
-            'GI_Body',
-            'GI_Face',
-            'GI_Hair',
-            'GI_Outlines'
-        ]
-        for checking_name in imported_mat_name:
-            if checking_name not in bpy.data.materials:
+        # 检查所有必需的材质
+        required_materials = ['GI_Body', 'GI_Face', 'GI_Hair', 'GI_Outlines']
+        for mat_name in required_materials:
+            mat = bpy.data.materials.get(mat_name)
+            if not mat:
                 return False
+            # 确保材质不会被自动清理
+            mat.use_fake_user = True
+        
+        # 检查必需的节点组
+        required_node_groups = ['Light Vectors']
+        for ng_name in required_node_groups:
+            ng = bpy.data.node_groups.get(ng_name)
+            if not ng:
+                return False
+            # 确保节点组不会被自动清理
+            ng.use_fake_user = True
+        
+        # 检查必需的对象
+        required_objects = ['Light Direction Template']
+        for obj_name in required_objects:
+            if obj_name not in bpy.data.objects:
+                return False
+        
         return True
 
     def copy_meterial_for_character(self, model_name):
@@ -121,25 +147,31 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         ref_material = bpy.data.materials['GI_Body']
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Body_Mat_Name']
+        char_material.use_fake_user = False  # 角色材质不需要fake user
 
         # Hair mat
         ref_material = bpy.data.materials['GI_Hair']
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Hair_Mat_Name']
+        char_material.use_fake_user = False
 
         # Face mat
         ref_material = bpy.data.materials['GI_Face']
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Face_Mat_Name']
+        char_material.use_fake_user = False
 
         # Outline mat
         ref_material = bpy.data.materials['GI_Outlines']
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Face_Outline_Mat_Name']
+        char_material.use_fake_user = False
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Hair_Outline_Mat_Name']
+        char_material.use_fake_user = False
         char_material = ref_material.copy()         
         char_material.name = meterial_name_map['Body_Outline_Mat_Name']
+        char_material.use_fake_user = False
 
         return meterial_name_map
     
@@ -154,9 +186,9 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             'HairOutline': '_Mat_Hair.json'
         }
         
-        # 可选的文件类型
+        # 可选的文件类型（_Mat_Dress.json 和 _Mat_Leather.json 是等效的）
         optional_files = {
-            'DressOutline': '_Mat_Dress.json'
+            'DressOutline': ['_Mat_Dress.json', '_Mat_Leather.json']  # 修改为列表形式
         }
 
         # 处理必需文件
@@ -183,12 +215,19 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             except Exception as e:
                 raise BobHException(f'读取描边文件失败: {file_path} - {str(e)}')
 
-        # 处理可选文件
-        for outline_type, file_suffix in optional_files.items():
+        # 处理可选文件（现在检查多个可能的文件名）
+        for outline_type, file_suffixes in optional_files.items():
             file_path = None
-            for file in os.listdir(directory):
-                if file.endswith(file_suffix):
-                    file_path = os.path.join(directory, file)
+            found_file = None
+            
+            # 检查所有可能的文件名
+            for suffix in file_suffixes:
+                for file in os.listdir(directory):
+                    if file.endswith(suffix):
+                        file_path = os.path.join(directory, file)
+                        found_file = file
+                        break
+                if file_path:
                     break
             
             if file_path:
@@ -202,11 +241,12 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
                         'Color4': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor4'],
                         'Color5': json_obj['m_SavedProperties']['m_Colors']['_OutlineColor5'],
                     }
+                    self.report({'INFO'}, f'使用描边文件: {found_file}')
                 except Exception as e:
-                    self.report({'INFO'}, f'读取可选描边文件失败: {file_path} - {str(e)}，将使用身体描边设置')
+                    self.report({'INFO'}, f'读取可选描边文件失败: {found_file} - {str(e)}，将使用身体描边设置')
                     outline_info[outline_type] = outline_info['BodyOutline'].copy()
             else:
-                self.report({'INFO'}, f'未找到可选描边文件: {file_suffix}，将使用身体描边设置')
+                self.report({'INFO'}, f'未找到可选描边文件(任何其一即可): {", ".join(file_suffixes)}，将使用身体描边设置')
                 outline_info[outline_type] = outline_info['BodyOutline'].copy()
         
         return outline_info
@@ -565,6 +605,13 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
         collection_name = f'{model_name}_Collection'
 
         try:
+            # 确保预设存在，必要时重新导入
+            if not self.guard_shader_exist():
+                self.import_shader_preset()
+                # 导入后再次检查
+                if not self.guard_shader_exist():
+                    raise BobHException('Shader预设导入失败，请检查插件安装')
+                
             self._meterial_name_map = self.copy_meterial_for_character(model_name)
             self._outline_info = self.read_character_outline_info(mat_directory)
             self.apply_texture_to_material(mat_directory)
@@ -572,6 +619,11 @@ class BOBH_OT_apply_shader_to_mmd_model(bpy.types.Operator):
             self.replace_mmd_material_with_shader(select_obj)
             self.add_object_and_children_to_collection(mmd_root_obj, collection_name)
             self.create_light_dir_and_head_empty(model_name, collection_name, mesh_location)
+            
+            # 确保操作完成后预设资源仍然存在
+            if not self.guard_shader_exist():
+                raise BobHException('操作过程中Shader预设被意外移除')
+                
         except BobHException as e:
             self.report({'ERROR'}, str(e))
             return {'CANCELLED'}
